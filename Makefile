@@ -1,6 +1,6 @@
 BIN=bfc
 CXX=g++
-LIBS=-lboost_program_options -lboost_system -lboost_filesystem
+LIBS=-lboost_program_options -lboost_system -lboost_filesystem -lpthread
 CFLAGS=-Wall -std=c++11
 
 all: $(BIN)
