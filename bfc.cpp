@@ -76,14 +76,26 @@ int main(int argc, char *argv[])
         }
     }
 
-    bp::system("/usr/bin/as", "-o", objFname, asmFname);
+    int res = bp::system(bp::search_path("as"), "-o", objFname, asmFname);
     unlink(asmFname.c_str());
+
+    if (res != 0)
+    {
+        cerr << "as returned " << res << " exit status" << endl;
+        return 1;
+    }
 
     if (!opts->link())
         return 0;
 
-    bp::system("/usr/bin/ld", "-o", binFname, objFname);
+    res = bp::system(bp::search_path("ld"), "-o", binFname, objFname);
     unlink(objFname.c_str());
+
+    if (res != 0)
+    {
+        cerr << "ld returned " << res << " exit status" << endl;
+        return 1;
+    }
 
     return 0;
 }
