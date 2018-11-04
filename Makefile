@@ -1,19 +1,14 @@
-BIN=bfc
-CXX=g++
-LIBS=-lboost_program_options -lboost_system -lboost_filesystem -lpthread
-CFLAGS=-Wall -std=c++11
+TARGET=bfc
+LDLIBS=-lboost_program_options -lboost_system -lboost_filesystem -lpthread
 
-all: $(BIN)
+all: $(TARGET)
 
 include make.deps
 
-$(BIN): bfc.o options.o program.o file.o
-	$(CXX) -o $@ $^ $(LIBS) $(CFLAGS)
-
-.cpp.o:
-	$(CXX) -c -o $@ $< $(CFLAGS)
+$(TARGET): bfc.o options.o program.o file.o
+	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 clean:
-	rm *.o
+	$(RM) *.o $(TARGET)
 
 .PHONY: all clean
