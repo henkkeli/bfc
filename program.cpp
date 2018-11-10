@@ -16,9 +16,7 @@ Program::Program(string code, std::shared_ptr<Options> opts) :
 string Program::genPrologue() const
 {
     return "\t.globl\t_start\n"
-           "\t.data\n"
-           "buf:\n"
-           "\t.zero\t" + std::to_string(opts_->memSize()) + "\n"
+           "\t.lcomm\tbuf, " + std::to_string(opts_->memSize()) + "\n"
            "\t.text\n"
            "_start:\n"
            "\tmovq\t$buf, %rdi\n"; // init pointer to first memory cell
