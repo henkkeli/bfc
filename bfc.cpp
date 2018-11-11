@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     if (!opts->parse(argc, argv))
     {
         cerr << opts->err() << endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     string asmFname;
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     if (!inFile.is_open())
     {
         cerr << "can't open input file" << endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     std::stringstream buf;
@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
         if (asmFname.empty())
         {
             cerr << "can't create temporary file" << endl;
+            return EXIT_FAILURE;
         }
     }
 
@@ -57,14 +58,14 @@ int main(int argc, char *argv[])
     if (!outFile.is_open())
     {
         cerr << "can't open output file" << endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     outFile << prg;
     outFile.close();
 
     if (!opts->assemble())
-        return 0;
+        return EXIT_SUCCESS;
 
     if (objFname.empty())
     {
@@ -73,6 +74,7 @@ int main(int argc, char *argv[])
         if (objFname.empty())
         {
             cerr << "can't create temporary file" << endl;
+            return EXIT_FAILURE;
         }
     }
 
@@ -82,11 +84,11 @@ int main(int argc, char *argv[])
     if (res != 0)
     {
         cerr << "as returned " << res << " exit status" << endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     if (!opts->link())
-        return 0;
+        return EXIT_SUCCESS;
 
     res = bp::system(bp::search_path("ld"), "-o", binFname, objFname);
     unlink(objFname.c_str());
@@ -94,8 +96,8 @@ int main(int argc, char *argv[])
     if (res != 0)
     {
         cerr << "ld returned " << res << " exit status" << endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
