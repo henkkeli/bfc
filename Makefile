@@ -1,14 +1,10 @@
-TARGET=bfc
-LDLIBS=-lboost_program_options -lboost_system -lboost_filesystem -lpthread
+CFLAGS = -Wall -Wextra
 
-all: $(TARGET)
-
-include make.deps
-
-$(TARGET): bfc.o options.o program.o file.o
-	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
+bfc: bfc.o compile.o
+bfc.o: bfc.c common.h compile.h
+compile.o: compile.c common.h compile.h
 
 clean:
-	$(RM) *.o $(TARGET)
+	$(RM) *.o bfc
 
-.PHONY: all clean
+.PHONY: clean

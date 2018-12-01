@@ -1,4 +1,0 @@
-bfc.o: bfc.cpp program.h instruction.h options.h file.h
-file.o: file.cpp file.h options.h
-options.o: options.cpp options.h
-program.o: program.cpp program.h instruction.h options.h
