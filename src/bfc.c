@@ -14,15 +14,6 @@
 
 #define PROGRAM_NAME "bfc"
 
-static struct options opt = {
-    .assemble = 1,
-    .link = 1,
-    .memsize = 30000,
-    .symbol = "main",
-    .outfile = NULL,
-    .infile = NULL,
-};
-
 /* long opts without short option */
 enum
 {
@@ -35,29 +26,27 @@ static struct option const long_opts[] = {
     {NULL, 0, NULL, 0}
 };
 
-int main(int argc, char *argv[])
+int handle_args(int argc, char *argv[], struct options *opt)
 {
-    FILE *in_stream, *out_stream;
-
     int c;
     while ((c = getopt_long(argc, argv, "cs:So:", long_opts, NULL)) != -1)
     {
         switch (c)
         {
         case 'c':
-            opt.link = 0;
+            opt->link = 0;
             break;
 
         case 'S':
-            opt.assemble = 0;
+            opt->assemble = 0;
             break;
 
         case 'o':
-            opt.outfile = strdup(optarg);
+            opt->outfile = strdup(optarg);
             break;
 
         case MEM_SIZE:
-            opt.memsize = atoi(optarg);
+            opt->memsize = atoi(optarg);
             break;
 
         case 's':
@@ -65,13 +54,13 @@ int main(int argc, char *argv[])
             {
                 fprintf(stderr, "%s: %s\n", PROGRAM_NAME,
                         "symbol '_start' is reserved, use 'main' instead");
-                return EXIT_FAILURE;
+                return 0;
             }
-            opt.symbol = strdup(optarg);
+            opt->symbol = strdup(optarg);
             break;
 
         case '?':
-            return EXIT_FAILURE;
+            return 0;
 
         default:
             abort();
@@ -81,15 +70,33 @@ int main(int argc, char *argv[])
     switch (argc-optind)
     {
     case 1:
-        opt.infile = strdup(argv[optind]);
+        opt->infile = strdup(argv[optind]);
         break;
     case 0:
         fprintf(stderr, "%s: %s\n", PROGRAM_NAME, "no input file");
-        return EXIT_FAILURE;
+        return 0;
     default:
         fprintf(stderr, "%s: %s\n", PROGRAM_NAME, "too many arguments");
-        return EXIT_FAILURE;
+        return 0;
     }
+
+    return 1;
+}
+
+int main(int argc, char *argv[])
+{
+    FILE *in_stream, *out_stream;
+
+    struct options opt = {
+        .assemble = 1,
+        .link = 1,
+        .memsize = 30000,
+        .symbol = "main",
+        .outfile = NULL,
+        .infile = NULL,
+    };
+
+    handle_args(argc, argv, &opt);
 
     struct stat stbuf;
     if (stat(opt.infile, &stbuf) == -1)
