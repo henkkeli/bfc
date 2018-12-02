@@ -12,4 +12,5 @@ add_project_arguments(cflags, language: 'c')
 executable('bfc',
   'src/bfc.c',
   'src/compile.c',
+  'src/file.c',
 )
