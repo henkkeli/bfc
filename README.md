@@ -20,6 +20,8 @@ A Brainfuck compiler, because why not
 
 # Notes
 
+Compile with `meson build && ninja -C build`
+
 Rewritten in C. Old C++ version is in old-cxx branch. Some changes:
 
 - Boost dependency is obviously dropped
