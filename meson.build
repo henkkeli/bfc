@@ -6,12 +6,10 @@ project('bfc', 'c',
   license: 'GPLv3',
 )
 
-inc = include_directories(
-  'src',
-)
+cflags = ['-Wall', '-Wextra']
+add_project_arguments(cflags, language: 'c')
 
 executable('bfc',
   'src/bfc.c',
   'src/compile.c',
-  include_directories: inc
 )
