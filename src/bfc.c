@@ -49,14 +49,14 @@ char *gen_fname(const char* path, const char* ext)
 
     /* reserve buffer big enough for added extension */
     char *fname = (char *) malloc(base_len + ext_len);
-    strncpy(fname, base, base_len);
+    strcpy(fname, base);
 
     /* remove .bf extension if there is one */
     if (base_len > bf_ext_len &&
             strcmp(fname + base_len - bf_ext_len, bf_ext) == 0)
         fname[base_len - bf_ext_len] = 0;
 
-    return strncat(fname, ext, ext_len);
+    return strcat(fname, ext);
 }
 
 int main(int argc, char *argv[])
