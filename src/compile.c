@@ -20,7 +20,7 @@ static struct loopstack *stack_top = NULL;
 
 static void instr_list_add(struct instr **list_ptr, char cmd, int param)
 {
-    struct instr *newnode = (struct instr *) malloc(sizeof(struct instr *));
+    struct instr *newnode = (struct instr *) malloc(sizeof(struct instr));
     newnode->cmd = cmd;
     newnode->param = param;
     newnode->next = NULL;
@@ -64,7 +64,7 @@ static int end_loop(void)
 
 static struct instr *parse(FILE *in_stream)
 {
-    struct instr *prg_start = (struct instr *) malloc(sizeof(struct instr *));
+    struct instr *prg_start = (struct instr *) malloc(sizeof(struct instr));
     prg_start->cmd = 0;
     struct instr *prg_ptr = prg_start;
 
