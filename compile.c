@@ -174,50 +174,55 @@ int compile(FILE *in_stream, FILE *out_stream, struct options *opt)
     struct instr *prg_ptr = prg_start->next;
     while (prg_ptr != NULL)
     {
-        char *fmt;
         switch (prg_ptr->cmd)
         {
         case '<':
-            fmt = "\tsubq\t$%d, %%rbx\n";
-            fprintf(out_stream, fmt, prg_ptr->param);
+            fprintf(out_stream,
+                    "\tsubq\t$%d, %%rbx\n",
+                    prg_ptr->param);
             break;
 
         case '>':
-            fmt = "\taddq\t$%d, %%rbx\n";
-            fprintf(out_stream, fmt, prg_ptr->param);
+            fprintf(out_stream,
+                    "\taddq\t$%d, %%rbx\n",
+                    prg_ptr->param);
             break;
 
         case '+':
-            fmt = "\taddb\t$%d, (%%rbx)\n";
-            fprintf(out_stream, fmt, prg_ptr->param);
+            fprintf(out_stream,
+                    "\taddb\t$%d, (%%rbx)\n",
+                    prg_ptr->param);
             break;
 
         case '-':
-            fmt = "\tsubb\t$%d, (%%rbx)\n";
-            fprintf(out_stream, fmt, prg_ptr->param);
+            fprintf(out_stream,
+                    "\tsubb\t$%d, (%%rbx)\n",
+                    prg_ptr->param);
             break;
 
         case '[':
-            fmt = "LB%d:\n"
-                  "\tcmpb\t$0, (%%rbx)\n"
-                  "\tje\tLE%d\n";
-            fprintf(out_stream, fmt, prg_ptr->param, prg_ptr->param);
+            fprintf(out_stream,
+                    "LB%1$d:\n"
+                    "\tcmpb\t$0, (%%rbx)\n"
+                    "\tje\tLE%1$d\n",
+                    prg_ptr->param);
             break;
 
         case ']':
-            fmt = "\tjmp\tLB%d\n"
-                  "LE%d:\n";
-            fprintf(out_stream, fmt, prg_ptr->param, prg_ptr->param);
+            fprintf(out_stream,
+                    "\tjmp\tLB%1$d\n"
+                    "LE%1$d:\n",
+                    prg_ptr->param);
             break;
 
         case '.':
-            fmt = "\tcall\twrite\n";
-            fprintf(out_stream, fmt, prg_ptr->param);
+            fprintf(out_stream,
+                    "\tcall\twrite\n");
             break;
 
         case ',':
-            fmt = "\tcall\tread\n";
-            fprintf(out_stream, fmt, prg_ptr->param);
+            fprintf(out_stream,
+                    "\tcall\tread\n");
             break;
         }
 
