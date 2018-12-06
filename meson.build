@@ -9,7 +9,6 @@ project('bfc', 'c',
 cflags = [
   '-Wall',
   '-Wextra',
-  '-Wpedantic',
   '-Wshadow',
   '-Werror=implicit-function-declaration',
   '-Wstrict-prototypes'
@@ -20,5 +19,5 @@ executable('bfc',
   'src/bfc.c',
   'src/compile.c',
   'src/file.c',
-  'src/dstring.c',
+  'src/str.c',
 )

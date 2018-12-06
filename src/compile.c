@@ -1,7 +1,10 @@
+#define _GNU_SOURCE
+
 #include "common.h"
 #include "compile.h"
-#include "dstring.h"
+#include "str.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <string.h>
@@ -159,13 +162,15 @@ static struct instr *parse(const char *src)
     return prg_start;
 }
 
-int compile(const char *src, dstring_t *out, struct options *opt)
+char *compile(const char *src, struct options *opt)
 {
     struct instr *prg_start = parse(src);
     if (prg_start == NULL)
-        return 0;
+        return NULL;
 
-    ds_strcatf(out,
+    char *out;
+
+    asprintf(&out,
             "\t.globl\t%1$s\n"
             "\t.lcomm\tbuf, %2$d\n"
             "\t.text\n"
@@ -181,31 +186,31 @@ int compile(const char *src, dstring_t *out, struct options *opt)
         switch (prg_ptr->cmd)
         {
         case '<':
-            ds_strcatf(out,
+            asprintfa(&out,
                     "\tsubq\t$%d, %%rbx\n",
                     prg_ptr->param);
             break;
 
         case '>':
-            ds_strcatf(out,
+            asprintfa(&out,
                     "\taddq\t$%d, %%rbx\n",
                     prg_ptr->param);
             break;
 
         case '+':
-            ds_strcatf(out,
+            asprintfa(&out,
                     "\taddb\t$%d, (%%rbx)\n",
                     prg_ptr->param);
             break;
 
         case '-':
-            ds_strcatf(out,
+            asprintfa(&out,
                     "\tsubb\t$%d, (%%rbx)\n",
                     prg_ptr->param);
             break;
 
         case '[':
-            ds_strcatf(out,
+            asprintfa(&out,
                     "LB%1$d:\n"
                     "\tcmpb\t$0, (%%rbx)\n"
                     "\tje\tLE%1$d\n",
@@ -213,19 +218,19 @@ int compile(const char *src, dstring_t *out, struct options *opt)
             break;
 
         case ']':
-            ds_strcatf(out,
+            asprintfa(&out,
                     "\tjmp\tLB%1$d\n"
                     "LE%1$d:\n",
                     prg_ptr->param);
             break;
 
         case '.':
-            ds_strcatf(out,
+            asprintfa(&out,
                     "\tcall\twrite\n");
             break;
 
         case ',':
-            ds_strcatf(out,
+            asprintfa(&out,
                     "\tcall\tread\n");
             break;
         }
@@ -234,12 +239,12 @@ int compile(const char *src, dstring_t *out, struct options *opt)
     }
 
     /* cleanup code, write/read calls */
-    ds_strcatf(out,
+    asprintfa(&out,
             "\tmovl\t$0, %%eax\n"         /* return value */
             "\tpopq\t%%rbp\n"
             "\tret\n");
 
-    ds_strcatf(out,
+    asprintfa(&out,
             "write:\n"
             "\tmovq\t$%d, %%rax\n"        /* syscall */
             "\tmovq\t$%d, %%rdi\n"        /* fd */
@@ -249,7 +254,7 @@ int compile(const char *src, dstring_t *out, struct options *opt)
             "\tret\n",
             SYS_write, STDOUT_FILENO);
 
-    ds_strcatf(out,
+    asprintfa(&out,
             "read:\n"
             "\tmovq\t$%d, %%rax\n"        /* syscall */
             "\tmovq\t$%d, %%rdi\n"        /* fd */
@@ -260,5 +265,5 @@ int compile(const char *src, dstring_t *out, struct options *opt)
             SYS_read, STDIN_FILENO);
 
     instr_list_free(prg_start);
-    return 1;
+    return out;
 }

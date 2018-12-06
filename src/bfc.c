@@ -3,7 +3,6 @@
 #include "common.h"
 #include "file.h"
 #include "compile.h"
-#include "dstring.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -161,18 +160,15 @@ int main(int argc, char *argv[])
         close(fd[0]);
     }
 
-    dstring_t out;
-    ds_init(&out);
-
-    if (!compile(src, &out, &opt))
+    char *out = compile(src, &opt);
+    if (out == NULL)
         error(EXIT_FAILURE, 0, "cannot parse input");
 
-
-    fputs(ds_string(&out), out_stream);
+    fputs(out, out_stream);
     fclose(out_stream);
 
     free(src);
-    ds_free(&out);
+    free(out);
 
     if (opt.assemble)
     {
