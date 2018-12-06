@@ -20,82 +20,88 @@ struct instr {
     struct instr *next;
 };
 
-static struct loopstack *stack_top = NULL;
+struct program {
+    struct instr *begin;
+    struct instr *end;
+};
 
-static void instr_list_add(struct instr **list_ptr, char cmd, int param)
+static void prg_add_instr(struct program *prg, char cmd, int param)
 {
-    struct instr *newnode = (struct instr *) malloc(sizeof(struct instr));
+    struct instr *newnode = malloc(sizeof(struct instr));
     newnode->cmd = cmd;
     newnode->param = param;
     newnode->next = NULL;
 
-    (*list_ptr)->next = newnode;
-    *list_ptr = newnode;
+    if (prg->end != NULL)
+        prg->end->next = newnode;
+    else
+        prg->begin = newnode;
+
+    prg->end = newnode;
 }
 
-static void instr_list_free(struct instr *ptr)
+static void prg_clear(struct program *prg)
 {
-    struct instr *tmp = ptr;
-    while (ptr != NULL)
+    while (prg->begin != NULL)
     {
-        tmp = ptr->next;
-        free(ptr);
-        ptr = tmp;
+        struct instr *tmp = prg->begin;
+        prg->begin = prg->begin->next;
+        free(tmp);
     }
+    prg->end = NULL;
 }
 
-static int begin_loop(void)
+static int begin_loop(struct loopstack **top)
 {
     static int count = 0;
     struct loopstack *loop = (struct loopstack *) malloc(sizeof(struct loopstack));
     loop->n = count;
-    loop->prev = stack_top;
-    stack_top = loop;
+    loop->prev = *top;
+    *top = loop;
     return count++;
 }
 
-static int end_loop(void)
+static int end_loop(struct loopstack **top)
 {
-    if (stack_top == NULL)
+    if (*top == NULL)
         return -1;
 
-    int res = stack_top->n;
-    struct loopstack *tmp = stack_top;
-    stack_top = stack_top->prev;
+    int res = (*top)->n;
+    struct loopstack *tmp = *top;
+    *top = (*top)->prev;
     free(tmp);
     return res;
 }
 
-static struct instr *parse(const char *src)
+static int parse(const char *src, struct program *prg)
 {
-    struct instr *prg_start = (struct instr *) malloc(sizeof(struct instr));
-    prg_start->cmd = 0;
-    prg_start->next = NULL;
-    struct instr *prg_ptr = prg_start;
+    prg->begin = NULL;
+    prg->end = NULL;
 
     int count = 0;
     size_t i = 0;
-    int loop;
+    struct loopstack *stack_top = NULL;
+
+
     while (i < strlen(src))
     {
         char c = src[i++];
+        int param = 0;
         switch (c)
         {
         case '.':
         case ',':
-            instr_list_add(&prg_ptr, c, 1);
             break;
         case '[':
-            instr_list_add(&prg_ptr, c, begin_loop());
+            param = begin_loop(&stack_top);
             break;
         case ']':
-            loop = end_loop();
-            if (loop == -1)
+            param = end_loop(&stack_top);
+            if (param == -1)
             {
-                instr_list_free(prg_start);
-                return NULL;
+                prg_clear(prg);
+                return 0;
             }
-            instr_list_add(&prg_ptr, c, loop);
             break;
         case '+':
         case '-':
@@ -125,7 +131,7 @@ static struct instr *parse(const char *src)
                 count = -count;
             }
 
-            instr_list_add(&prg_ptr, c, count);
+            param = count;
             break;
         case '>':
         case '<':
@@ -155,20 +161,26 @@ static struct instr *parse(const char *src)
                 count = -count;
             }
 
-            instr_list_add(&prg_ptr, c, count);
+            param = count;
             break;
+
+        default:
+            continue;
         }
+
+        prg_add_instr(prg, c, param);
     }
 
-    return prg_start;
+    return 1;
 }
 
 char *compile(const char *src, struct options *opt)
 {
-    struct instr *prg_start = parse(src);
-    if (prg_start == NULL)
+    struct program prg;
+    if (!parse(src, &prg))
         return NULL;
 
+    struct instr *prg_ptr = prg.begin;
     char *out;
 
     asprintf(&out,
@@ -181,7 +193,6 @@ char *compile(const char *src, struct options *opt)
             "\tleaq\tbuf(%%rip), %%rbx\n", /* init cell pointer */
             opt->symbol, opt->memsize);
 
-    struct instr *prg_ptr = prg_start->next;
     while (prg_ptr != NULL)
     {
         switch (prg_ptr->cmd)
@@ -265,6 +276,6 @@ char *compile(const char *src, struct options *opt)
             "\tret\n",
             SYS_read, STDIN_FILENO);
 
-    instr_list_free(prg_start);
+    prg_clear(&prg);
     return out;
 }
