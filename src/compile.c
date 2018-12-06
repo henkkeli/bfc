@@ -70,6 +70,7 @@ static struct instr *parse(const char *src)
 {
     struct instr *prg_start = (struct instr *) malloc(sizeof(struct instr));
     prg_start->cmd = 0;
+    prg_start->next = NULL;
     struct instr *prg_ptr = prg_start;
 
     int count = 0;

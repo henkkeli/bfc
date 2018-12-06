@@ -107,6 +107,11 @@ int main(int argc, char *argv[])
     if ((src = read_file(opt.infile)) == NULL)
         error(EXIT_FAILURE, errno, "%s", opt.infile);
 
+    char *out = compile(src, &opt);
+    if (out == NULL)
+        error(EXIT_FAILURE, 0, "cannot parse input");
+    free(src);
+
     if (opt.outfile == NULL)
     {
         if (!opt.assemble)
@@ -160,14 +165,9 @@ int main(int argc, char *argv[])
         close(fd[0]);
     }
 
-    char *out = compile(src, &opt);
-    if (out == NULL)
-        error(EXIT_FAILURE, 0, "cannot parse input");
-
     fputs(out, out_stream);
     fclose(out_stream);
 
-    free(src);
     free(out);
 
     if (opt.assemble)
