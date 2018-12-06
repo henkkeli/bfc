@@ -18,16 +18,10 @@ int asprintfa(char **strp, const char *fmt, ...)
         return -1;
     }
 
-    char *final = malloc(strlen(*strp) + strlen(buf) + 1);
-    strcpy(final, *strp);
-    strcat(final, buf);
-
+    *strp = realloc(*strp, strlen(*strp) + strlen(buf) + 1);
+    strcat(*strp, buf);
     free(buf);
-    free(*strp);
-
-    *strp = final;
 
     va_end(ap);
-
     return n;
 }
