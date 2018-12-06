@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include "common.h"
 #include "file.h"
 #include "compile.h"
@@ -13,8 +15,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <getopt.h>
-
-#define PROGRAM_NAME "bfc"
 
 /* long opts without short option */
 enum
@@ -53,11 +53,8 @@ int handle_args(int argc, char *argv[], struct options *opt)
 
         case 's':
             if (strcmp(optarg, "_start") == 0)
-            {
-                fprintf(stderr, "%s: %s\n", PROGRAM_NAME,
+                error(EXIT_FAILURE, 0,
                         "symbol '_start' is reserved, use 'main' instead");
-                return 0;
-            }
             opt->symbol = strdup(optarg);
             break;
 
@@ -75,11 +72,10 @@ int handle_args(int argc, char *argv[], struct options *opt)
         opt->infile = strdup(argv[optind]);
         break;
     case 0:
-        fprintf(stderr, "%s: %s\n", PROGRAM_NAME, "no input file");
-        return 0;
+        error(EXIT_FAILURE, 0, "no input file");
+        __builtin_unreachable(); /* stop gcc complaining about fallthrough */
     default:
-        fprintf(stderr, "%s: %s\n", PROGRAM_NAME, "too many arguments");
-        return 0;
+        error(EXIT_FAILURE, 0, "too many arguments");
     }
 
     return 1;
@@ -87,6 +83,9 @@ int handle_args(int argc, char *argv[], struct options *opt)
 
 int main(int argc, char *argv[])
 {
+    /* use short name i.e. no directories for error messages */
+    program_invocation_name = program_invocation_short_name;
+
     struct options opt = {
         .assemble = 1,
         .link = 1,
@@ -100,25 +99,14 @@ int main(int argc, char *argv[])
 
     struct stat stbuf;
     if (stat(opt.infile, &stbuf) == -1)
-    {
-        fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, opt.infile,
-                strerror(errno));
-        return EXIT_FAILURE;
-    }
+        error(EXIT_FAILURE, errno, "%s", opt.infile);
+
     if (S_ISDIR(stbuf.st_mode))
-    {
-        fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, opt.infile,
-                strerror(EISDIR));
-        return EXIT_FAILURE;
-    }
+        error(EXIT_FAILURE, EISDIR, "%s", opt.infile);
 
     char *src;
     if ((src = read_file(opt.infile)) == NULL)
-    {
-        fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, opt.infile,
-                strerror(errno));
-        return EXIT_FAILURE;
-    }
+        error(EXIT_FAILURE, errno, "%s", opt.infile);
 
     if (opt.outfile == NULL)
     {
@@ -135,45 +123,26 @@ int main(int argc, char *argv[])
     {
         out_stream = fopen(opt.outfile, "w");
         if (out_stream == NULL)
-        {
-            fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, opt.outfile,
-                    strerror(errno));
-            return EXIT_FAILURE;
-        }
+            error(EXIT_FAILURE, errno, "%s", opt.outfile);
     }
     else
     {
         int fd[2];
         if (pipe(fd) == -1)
-        {
-            fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, "pipe",
-                    strerror(errno));
-            return EXIT_FAILURE;
-        }
+            error(EXIT_FAILURE, errno, "pipe");
 
         out_stream = fdopen(fd[1], "w");
         if (out_stream == NULL)
-        {
-            fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, "pipe",
-                    strerror(errno));
-            return EXIT_FAILURE;
-        }
+            error(EXIT_FAILURE, errno, "fdopen");
 
         pid_t pid = fork();
         if (pid == -1)
-        {
-            fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, "fork",
-                    strerror(errno));
-            return EXIT_FAILURE;
-        }
+            error(EXIT_FAILURE, errno, "fork");
+
         if (pid == 0)
         {
             if (dup2(fd[0], STDIN_FILENO) == -1)
-            {
-                fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, "dup2",
-                        strerror(errno));
-                return EXIT_FAILURE;
-            }
+                error(EXIT_FAILURE, errno, "dup2");
 
             close(fd[0]);
             close(fd[1]);
@@ -186,9 +155,7 @@ int main(int argc, char *argv[])
 
             execvp("gcc", gcc_argv);
 
-            fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, "gcc",
-                    strerror(errno));
-            return EXIT_FAILURE;
+            error(EXIT_FAILURE, errno, "gcc");
         }
 
         close(fd[0]);
@@ -198,10 +165,7 @@ int main(int argc, char *argv[])
     ds_init(&out);
 
     if (!compile(src, &out, &opt))
-    {
-        fprintf(stderr, "%s: cannot parse input\n", PROGRAM_NAME);
-        return EXIT_FAILURE;
-    }
+        error(EXIT_FAILURE, 0, "cannot parse input");
 
 
     fputs(ds_string(&out), out_stream);
@@ -217,11 +181,7 @@ int main(int argc, char *argv[])
         status = WEXITSTATUS(status);
 
         if (status != 0)
-        {
-            fprintf(stderr, "%s: gcc returned %d exit status\n",
-                    PROGRAM_NAME, status);
-            return EXIT_FAILURE;
-        }
+            error(EXIT_FAILURE, 0, "gcc returned %d exit status", status);
     }
 
     return EXIT_SUCCESS;
