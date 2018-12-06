@@ -1,9 +1,10 @@
 #include "common.h"
 #include "compile.h"
+#include "dstring.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <string.h>
 
 struct loopstack {
     int n;
@@ -62,17 +63,18 @@ static int end_loop(void)
     return res;
 }
 
-static struct instr *parse(FILE *in_stream)
+static struct instr *parse(const char *src)
 {
     struct instr *prg_start = (struct instr *) malloc(sizeof(struct instr));
     prg_start->cmd = 0;
     struct instr *prg_ptr = prg_start;
 
     int count = 0;
-    char c;
+    size_t i = 0;
     int loop;
-    while ((c = getc(in_stream)) != EOF)
+    while (i < strlen(src))
     {
+        char c = src[i++];
         switch (c)
         {
         case '.':
@@ -93,11 +95,12 @@ static struct instr *parse(FILE *in_stream)
             break;
         case '+':
         case '-':
-            ungetc(c, in_stream);
+            --i;
             count = 0;
 
-            while ((c = getc(in_stream)) != EOF)
+            while (i < strlen(src))
             {
+                c = src[i++];
                 if (c == '+')
                     ++count;
                 else if (c == '-')
@@ -106,7 +109,7 @@ static struct instr *parse(FILE *in_stream)
                     break;
             }
 
-            ungetc(c, in_stream);
+            --i;
 
             if (count == 0)
                 break;
@@ -122,11 +125,12 @@ static struct instr *parse(FILE *in_stream)
             break;
         case '>':
         case '<':
-            ungetc(c, in_stream);
+            --i;
             count = 0;
 
-            while ((c = getc(in_stream)) != EOF)
+            while (i < strlen(src))
             {
+                c = src[i++];
                 if (c == '>')
                     ++count;
                 else if (c == '<')
@@ -135,7 +139,7 @@ static struct instr *parse(FILE *in_stream)
                     break;
             }
 
-            ungetc(c, in_stream);
+            --i;
 
             if (count == 0)
                 break;
@@ -155,13 +159,13 @@ static struct instr *parse(FILE *in_stream)
     return prg_start;
 }
 
-int compile(FILE *in_stream, FILE *out_stream, struct options *opt)
+int compile(const char *src, dstring_t *out, struct options *opt)
 {
-    struct instr *prg_start = parse(in_stream);
+    struct instr *prg_start = parse(src);
     if (prg_start == NULL)
         return 0;
 
-    fprintf(out_stream,
+    ds_strcatf(out,
             "\t.globl\t%1$s\n"
             "\t.lcomm\tbuf, %2$d\n"
             "\t.text\n"
@@ -177,31 +181,31 @@ int compile(FILE *in_stream, FILE *out_stream, struct options *opt)
         switch (prg_ptr->cmd)
         {
         case '<':
-            fprintf(out_stream,
+            ds_strcatf(out,
                     "\tsubq\t$%d, %%rbx\n",
                     prg_ptr->param);
             break;
 
         case '>':
-            fprintf(out_stream,
+            ds_strcatf(out,
                     "\taddq\t$%d, %%rbx\n",
                     prg_ptr->param);
             break;
 
         case '+':
-            fprintf(out_stream,
+            ds_strcatf(out,
                     "\taddb\t$%d, (%%rbx)\n",
                     prg_ptr->param);
             break;
 
         case '-':
-            fprintf(out_stream,
+            ds_strcatf(out,
                     "\tsubb\t$%d, (%%rbx)\n",
                     prg_ptr->param);
             break;
 
         case '[':
-            fprintf(out_stream,
+            ds_strcatf(out,
                     "LB%1$d:\n"
                     "\tcmpb\t$0, (%%rbx)\n"
                     "\tje\tLE%1$d\n",
@@ -209,19 +213,19 @@ int compile(FILE *in_stream, FILE *out_stream, struct options *opt)
             break;
 
         case ']':
-            fprintf(out_stream,
+            ds_strcatf(out,
                     "\tjmp\tLB%1$d\n"
                     "LE%1$d:\n",
                     prg_ptr->param);
             break;
 
         case '.':
-            fprintf(out_stream,
+            ds_strcatf(out,
                     "\tcall\twrite\n");
             break;
 
         case ',':
-            fprintf(out_stream,
+            ds_strcatf(out,
                     "\tcall\tread\n");
             break;
         }
@@ -230,12 +234,12 @@ int compile(FILE *in_stream, FILE *out_stream, struct options *opt)
     }
 
     /* cleanup code, write/read calls */
-    fprintf(out_stream,
+    ds_strcatf(out,
             "\tmovl\t$0, %%eax\n"         /* return value */
             "\tpopq\t%%rbp\n"
             "\tret\n");
 
-    fprintf(out_stream,
+    ds_strcatf(out,
             "write:\n"
             "\tmovq\t$%d, %%rax\n"        /* syscall */
             "\tmovq\t$%d, %%rdi\n"        /* fd */
@@ -245,7 +249,7 @@ int compile(FILE *in_stream, FILE *out_stream, struct options *opt)
             "\tret\n",
             SYS_write, STDOUT_FILENO);
 
-    fprintf(out_stream,
+    ds_strcatf(out,
             "read:\n"
             "\tmovq\t$%d, %%rax\n"        /* syscall */
             "\tmovq\t$%d, %%rdi\n"        /* fd */

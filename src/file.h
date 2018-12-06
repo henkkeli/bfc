@@ -14,4 +14,6 @@
  */
 char *gen_fname(const char* path, const char* ext);
 
+char *read_file(const char* path);
+
 #endif /* FILE_H */

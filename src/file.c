@@ -1,5 +1,6 @@
 #include "file.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 char *gen_fname(const char* path, const char* ext)
@@ -25,4 +26,24 @@ char *gen_fname(const char* path, const char* ext)
         fname[base_len - bf_ext_len] = 0;
 
     return strcat(fname, ext);
+}
+
+char *read_file(const char* path)
+{
+    FILE *stream = fopen(path, "r");
+    if (stream == NULL)
+        return NULL;
+
+    fseek(stream, 0, SEEK_END);
+    long n = ftell(stream);
+    rewind(stream);
+
+    char *buf = malloc(n + 1);
+
+    fread(buf, 1, n, stream);
+    fclose(stream);
+
+    buf[n] = 0;
+
+    return buf;
 }

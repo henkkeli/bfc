@@ -1,6 +1,7 @@
 #include "common.h"
 #include "file.h"
 #include "compile.h"
+#include "dstring.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <error.h>
 #include <errno.h>
 #include <unistd.h>
 #include <getopt.h>
@@ -85,8 +87,6 @@ int handle_args(int argc, char *argv[], struct options *opt)
 
 int main(int argc, char *argv[])
 {
-    FILE *in_stream, *out_stream;
-
     struct options opt = {
         .assemble = 1,
         .link = 1,
@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    in_stream = fopen(opt.infile, "r");
-    if (in_stream == NULL)
+    char *src;
+    if ((src = read_file(opt.infile)) == NULL)
     {
         fprintf(stderr, "%s: %s: %s\n", PROGRAM_NAME, opt.infile,
                 strerror(errno));
@@ -130,6 +130,7 @@ int main(int argc, char *argv[])
             opt.outfile = gen_fname(opt.infile, NULL);
     }
 
+    FILE *out_stream;
     if (!opt.assemble)
     {
         out_stream = fopen(opt.outfile, "w");
@@ -193,14 +194,21 @@ int main(int argc, char *argv[])
         close(fd[0]);
     }
 
-    if (!compile(in_stream, out_stream, &opt))
+    dstring_t out;
+    ds_init(&out);
+
+    if (!compile(src, &out, &opt))
     {
         fprintf(stderr, "%s: cannot parse input\n", PROGRAM_NAME);
         return EXIT_FAILURE;
     }
 
-    fclose(in_stream);
+
+    fputs(ds_string(&out), out_stream);
     fclose(out_stream);
+
+    free(src);
+    ds_free(&out);
 
     if (opt.assemble)
     {

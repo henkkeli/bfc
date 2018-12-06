@@ -2,7 +2,7 @@
 #define COMPILE_H
 
 #include "common.h"
-#include <stdio.h>
+#include "dstring.h"
 
 /**
  * @brief compile bf code read from in_stream and write result to out_stream
@@ -13,6 +13,6 @@
  *
  * @return 1 on success, 0 on parse failure
  */
-int compile(FILE *in_stream, FILE *out_stream, struct options *opt);
+int compile(const char *src, dstring_t *out, struct options *opt);
 
 #endif /* COMPILE_H */

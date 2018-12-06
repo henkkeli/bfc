@@ -6,11 +6,19 @@ project('bfc', 'c',
   license: 'GPLv3',
 )
 
-cflags = ['-Wall', '-Wextra']
+cflags = [
+  '-Wall',
+  '-Wextra',
+  '-Wpedantic',
+  '-Wshadow',
+  '-Werror=implicit-function-declaration',
+  '-Wstrict-prototypes'
+]
 add_project_arguments(cflags, language: 'c')
 
 executable('bfc',
   'src/bfc.c',
   'src/compile.c',
   'src/file.c',
+  'src/dstring.c',
 )
