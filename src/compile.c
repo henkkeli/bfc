@@ -66,14 +66,13 @@ static void prg_clear(struct program *prg)
     prg->end = NULL;
 }
 
-static int begin_loop(struct loopstack **top)
+static int begin_loop(struct loopstack **top, int *count)
 {
-    static int count = 0;
     struct loopstack *loop = (struct loopstack *) malloc(sizeof(struct loopstack));
-    loop->n = count;
+    loop->n = *count;
     loop->prev = *top;
     *top = loop;
-    return count++;
+    return (*count)++;
 }
 
 static int end_loop(struct loopstack **top)
@@ -167,6 +166,7 @@ static void compound_instr(const char *src, struct program *subprg)
 static int parse(const char *src, struct program *prg, struct options *opt)
 {
     struct loopstack *stack_top = NULL;
+    int loop_count = 0;
 
     for (size_t i = 0; i < strlen(src); ++i)
     {
@@ -179,7 +179,7 @@ static int parse(const char *src, struct program *prg, struct options *opt)
         case ',':
             break;
         case '[':
-            param = begin_loop(&stack_top);
+            param = begin_loop(&stack_top, &loop_count);
             break;
         case ']':
             param = end_loop(&stack_top);
