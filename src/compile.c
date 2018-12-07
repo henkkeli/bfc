@@ -161,6 +161,8 @@ static void compound_instr(const char *src, struct program *subprg)
 
         prg_add_instr(subprg, ptr_cmd, diff, i + low - cur);
     }
+
+    free(mem_diff);
 }
 
 static int parse(const char *src, struct program *prg, struct options *opt)

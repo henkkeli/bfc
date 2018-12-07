@@ -20,7 +20,7 @@ char *gen_fname(const char* path, const char* ext)
     size_t base_len = strlen(base);
 
     /* reserve buffer big enough for added extension */
-    char *fname = (char *) malloc(base_len + ext_len);
+    char *fname = (char *) malloc(base_len + ext_len + 1);
     strcpy(fname, base);
 
     /* remove .bf extension if there is one */
