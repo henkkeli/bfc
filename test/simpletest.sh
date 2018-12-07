@@ -84,6 +84,11 @@ check_hello ./hello
 rm hello f.o
 echo "test 8 ok (link with c++)"
 
+"$BFC" "$TESTDIR"/hello.bf -o hello --no-optimize
+check_hello ./hello
+rm hello
+echo "test 9 ok (no optimization)"
+
 cd ..
 rmdir out
 

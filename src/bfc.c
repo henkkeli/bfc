@@ -18,11 +18,13 @@
 /* long opts without short option */
 enum
 {
-    MEM_SIZE = CHAR_MAX + 1
+    MEM_SIZE = CHAR_MAX + 1,
+    NO_OPTIMIZE
 };
 
 static struct option const long_opts[] = {
     {"mem-size", required_argument, NULL, MEM_SIZE},
+    {"no-optimize", no_argument, NULL, NO_OPTIMIZE},
     {"symbol", required_argument, NULL, 's'},
     {NULL, 0, NULL, 0}
 };
@@ -48,6 +50,10 @@ int handle_args(int argc, char *argv[], struct options *opt)
 
         case MEM_SIZE:
             opt->memsize = atoi(optarg);
+            break;
+
+        case NO_OPTIMIZE:
+            opt->optimize = 0;
             break;
 
         case 's':
@@ -92,6 +98,7 @@ int main(int argc, char *argv[])
         .symbol = "main",
         .outfile = NULL,
         .infile = NULL,
+        .optimize = 1,
     };
 
     handle_args(argc, argv, &opt);

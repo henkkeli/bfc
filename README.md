@@ -18,6 +18,8 @@ A Brainfuck compiler, because why not
 
 `-s|--symbol <sym>` symbol used for the program, defaults to main, see notes
 
+`--no-optimize` disable all optimization
+
 # Notes
 
 Compile with `meson build && ninja -C build`

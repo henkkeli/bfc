@@ -164,14 +164,14 @@ static void compound_instr(const char *src, struct program *subprg)
     }
 }
 
-static int parse(const char *src, struct program *prg)
+static int parse(const char *src, struct program *prg, struct options *opt)
 {
     struct loopstack *stack_top = NULL;
 
     for (size_t i = 0; i < strlen(src); ++i)
     {
         char c = src[i];
-        int param = 0;
+        int param = 1;
         int offset = 0;
         switch (c)
         {
@@ -192,11 +192,15 @@ static int parse(const char *src, struct program *prg)
         case '+':
         case '-':
         case '>':
-        case '<': ;
+        case '<':
+            if (!opt->optimize)
+                break;
+
             struct program subprg = {NULL, NULL};
             int count = strcspn(src + i, ",.[]");
             char *cmpd = strndup(src + i, count);
             compound_instr(cmpd, &subprg);
+            free(cmpd);
             prg_cat(prg, &subprg);
             i += (count-1);
 
@@ -215,7 +219,7 @@ static int parse(const char *src, struct program *prg)
 char *compile(const char *src, struct options *opt)
 {
     struct program prg = {NULL, NULL};
-    if (!parse(src, &prg))
+    if (!parse(src, &prg, opt))
         return NULL;
 
     struct instr *prg_ptr = prg.begin;

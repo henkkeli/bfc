@@ -8,6 +8,7 @@ struct options {
     char *symbol;
     char *outfile;
     char *infile;
+    int optimize;
 };
 
 #endif /* COMMON_H */
