@@ -6,6 +6,8 @@ project('bfc', 'c',
   license: 'GPLv3',
 )
 
+incdir = include_directories('src')
+
 cflags = [
   '-Wall',
   '-Wextra',
@@ -20,4 +22,22 @@ executable('bfc',
   'src/compile.c',
   'src/file.c',
   'src/str.c',
+  include_directories: incdir
 )
+
+check = dependency('check', required: false)
+
+if check.found()
+  test_exe = executable('check',
+    'test/check.c',
+    'src/str.c',
+    'src/file.c',
+    'src/compile.c',
+    dependencies: check,
+    include_directories: incdir
+  )
+
+  test('check', test_exe)
+else
+  message('Install check for unit tests')
+endif
