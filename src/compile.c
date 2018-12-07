@@ -17,6 +17,7 @@ struct loopstack {
 struct instr {
     char cmd;
     int param;
+    int offset;
     struct instr *next;
 };
 
@@ -25,11 +26,12 @@ struct program {
     struct instr *end;
 };
 
-static void prg_add_instr(struct program *prg, char cmd, int param)
+static void prg_add_instr(struct program *prg, char cmd, int param, int offset)
 {
     struct instr *newnode = malloc(sizeof(struct instr));
     newnode->cmd = cmd;
     newnode->param = param;
+    newnode->offset = offset;
     newnode->next = NULL;
 
     if (prg->end != NULL)
@@ -38,6 +40,19 @@ static void prg_add_instr(struct program *prg, char cmd, int param)
         prg->begin = newnode;
 
     prg->end = newnode;
+}
+
+static void prg_cat(struct program *prg, struct program *subprg)
+{
+    if (subprg->begin == NULL)
+        return;
+
+    if (prg->begin == NULL)
+        prg->begin = subprg->begin;
+    else
+        prg->end->next = subprg->begin;
+
+    prg->end = subprg->end;
 }
 
 static void prg_clear(struct program *prg)
@@ -73,20 +88,91 @@ static int end_loop(struct loopstack **top)
     return res;
 }
 
+static void compound_instr(const char *src, struct program *subprg)
+{
+    /* bounds of modified memory area and current memory pointer */
+    int low = 0, high = 0, cur = 0;
+
+    for (size_t i = 0; i < strlen(src); ++i)
+    {
+        if (src[i] == '<')
+        {
+            --cur;
+            if (cur < low)
+                low = cur;
+        }
+        else if (src[i] == '>')
+        {
+            ++cur;
+            if (cur > high)
+                high = cur;
+        }
+    }
+
+    int mem_diff_size = high - low + 1;
+    char *mem_diff = calloc(mem_diff_size, 1);
+    char *ptr = mem_diff - low;
+
+    for (size_t i = 0; i < strlen(src); ++i)
+    {
+        switch (src[i])
+        {
+        case '<':
+            --ptr;
+            break;
+
+        case '>':
+            ++ptr;
+            break;
+
+        case '+':
+            ++(*ptr);
+            break;
+
+        case '-':
+            --(*ptr);
+            break;
+        }
+    }
+
+    /* move pointer to final position */
+    if (cur < 0)
+        prg_add_instr(subprg, '<', -cur, 0);
+    else if (cur > 0)
+        prg_add_instr(subprg, '>', cur, 0);
+
+    /* generate +/- instructions relative to alredy moved pointer */
+    for (int i = 0; i < mem_diff_size; ++i)
+    {
+        int diff = mem_diff[i];
+        if (diff == 0)
+            continue;
+
+        char ptr_cmd;
+
+        if (diff < 0)
+        {
+            ptr_cmd = '-';
+            diff = -diff;
+        }
+        else
+        {
+            ptr_cmd = '+';
+        }
+
+        prg_add_instr(subprg, ptr_cmd, diff, i + low - cur);
+    }
+}
+
 static int parse(const char *src, struct program *prg)
 {
-    prg->begin = NULL;
-    prg->end = NULL;
-
-    int count = 0;
-    size_t i = 0;
     struct loopstack *stack_top = NULL;
 
-
-    while (i < strlen(src))
+    for (size_t i = 0; i < strlen(src); ++i)
     {
-        char c = src[i++];
+        char c = src[i];
         int param = 0;
+        int offset = 0;
         switch (c)
         {
         case '.':
@@ -105,70 +191,22 @@ static int parse(const char *src, struct program *prg)
             break;
         case '+':
         case '-':
-            --i;
-            count = 0;
-
-            while (i < strlen(src))
-            {
-                c = src[i++];
-                if (c == '+')
-                    ++count;
-                else if (c == '-')
-                    --count;
-                else
-                    break;
-            }
-
-            --i;
-
-            if (count == 0)
-                break;
-            else if (count > 0)
-                c = '+';
-            else
-            {
-                c = '-';
-                count = -count;
-            }
-
-            param = count;
-            break;
         case '>':
-        case '<':
-            --i;
-            count = 0;
+        case '<': ;
+            struct program subprg = {NULL, NULL};
+            int count = strcspn(src + i, ",.[]");
+            char *cmpd = strndup(src + i, count);
+            compound_instr(cmpd, &subprg);
+            prg_cat(prg, &subprg);
+            i += (count-1);
 
-            while (i < strlen(src))
-            {
-                c = src[i++];
-                if (c == '>')
-                    ++count;
-                else if (c == '<')
-                    --count;
-                else
-                    break;
-            }
-
-            --i;
-
-            if (count == 0)
-                break;
-            else if (count > 0)
-                c = '>';
-            else
-            {
-                c = '<';
-                count = -count;
-            }
-
-            param = count;
-            break;
+            continue;
 
         default:
             continue;
         }
 
-        prg_add_instr(prg, c, param);
+        prg_add_instr(prg, c, param, offset);
     }
 
     return 1;
@@ -176,7 +214,7 @@ static int parse(const char *src, struct program *prg)
 
 char *compile(const char *src, struct options *opt)
 {
-    struct program prg;
+    struct program prg = {NULL, NULL};
     if (!parse(src, &prg))
         return NULL;
 
@@ -210,15 +248,26 @@ char *compile(const char *src, struct options *opt)
             break;
 
         case '+':
-            asprintfa(&out,
-                    "\taddb\t$%d, (%%rbx)\n",
-                    prg_ptr->param);
+            if (prg_ptr->offset)
+                asprintfa(&out,
+                        "\taddb\t$%d, %d(%%rbx)\n",
+                        prg_ptr->param, prg_ptr->offset);
+            else
+                asprintfa(&out,
+                        "\taddb\t$%d, (%%rbx)\n",
+                        prg_ptr->param);
+
             break;
 
         case '-':
-            asprintfa(&out,
-                    "\tsubb\t$%d, (%%rbx)\n",
-                    prg_ptr->param);
+            if (prg_ptr->offset)
+                asprintfa(&out,
+                        "\tsubb\t$%d, %d(%%rbx)\n",
+                        prg_ptr->param, prg_ptr->offset);
+            else
+                asprintfa(&out,
+                        "\tsubb\t$%d, (%%rbx)\n",
+                        prg_ptr->param);
             break;
 
         case '[':
