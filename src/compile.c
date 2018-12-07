@@ -219,7 +219,7 @@ static int parse(const char *src, struct program *prg, struct options *opt)
 char *compile(const char *src, struct options *opt)
 {
     struct program prg = {NULL, NULL};
-    if (!parse(src, &prg, opt))
+    if (src == NULL || opt == NULL || !parse(src, &prg, opt))
         return NULL;
 
     struct instr *prg_ptr = prg.begin;
