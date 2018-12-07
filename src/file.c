@@ -5,7 +5,10 @@
 
 char *gen_fname(const char* path, const char* ext)
 {
-    if (ext == NULL)
+    if (path == NULL || *path == 0)
+        return NULL;
+
+    if (ext == NULL || *ext == 0)
         return strdup("a.out");
 
     const char *bf_ext = ".bf";

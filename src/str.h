@@ -4,7 +4,7 @@
 /**
  * @brief asprintf but append string to *str
  *
- * @param strp pointer to existing malloc'd string
+ * @param strp pointer to existing malloc'd string or NULL
  * @param fmt see printf(3)
  * @param ... see printf(3)
  *

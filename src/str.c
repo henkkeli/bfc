@@ -18,9 +18,16 @@ int asprintfa(char **strp, const char *fmt, ...)
         return -1;
     }
 
-    *strp = realloc(*strp, strlen(*strp) + strlen(buf) + 1);
-    strcat(*strp, buf);
-    free(buf);
+    if (*strp == NULL)
+    {
+        *strp = buf;
+    }
+    else
+    {
+        *strp = realloc(*strp, strlen(*strp) + strlen(buf) + 1);
+        strcat(*strp, buf);
+        free(buf);
+    }
 
     va_end(ap);
     return n;
