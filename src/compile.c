@@ -224,81 +224,56 @@ char *compile(const char *src, struct options *opt)
     if (src == NULL || opt == NULL || !parse(src, &prg, opt))
         return NULL;
 
-    struct instr *prg_ptr = prg.begin;
-    char *out;
+    struct formats fmts;
+    (*opt->set_fmts)(&fmts);
 
-    asprintf(&out,
-            "\t.globl\t%1$s\n"
-            "\t.lcomm\tbuf, %2$d\n"
-            "\t.text\n"
-            "%1$s:\n"
-            "\tpushq\t%%rbp\n"
-            "\tmovq\t%%rsp, %%rbp\n"
-            "\tleaq\tbuf(%%rip), %%rbx\n", /* init cell pointer */
-            opt->symbol, opt->memsize);
+    struct instr *prg_ptr = prg.begin;
+    char *out = NULL;
+
+    asprintfa(&out, fmts.init_fmt, opt->symbol, opt->memsize);
 
     while (prg_ptr != NULL)
     {
         switch (prg_ptr->cmd)
         {
         case '<':
-            asprintfa(&out,
-                    "\tsubq\t$%d, %%rbx\n",
-                    prg_ptr->param);
+            asprintfa(&out, fmts.lt_fmt, prg_ptr->param);
             break;
 
         case '>':
-            asprintfa(&out,
-                    "\taddq\t$%d, %%rbx\n",
-                    prg_ptr->param);
+            asprintfa(&out, fmts.gt_fmt, prg_ptr->param);
             break;
 
         case '+':
             if (prg_ptr->offset)
-                asprintfa(&out,
-                        "\taddb\t$%d, %d(%%rbx)\n",
-                        prg_ptr->param, prg_ptr->offset);
+                asprintfa(&out, fmts.plus_off_fmt, prg_ptr->param,
+                                                    prg_ptr->offset);
             else
-                asprintfa(&out,
-                        "\taddb\t$%d, (%%rbx)\n",
-                        prg_ptr->param);
-
+                asprintfa(&out, fmts.plus_fmt, prg_ptr->param);
             break;
 
         case '-':
             if (prg_ptr->offset)
-                asprintfa(&out,
-                        "\tsubb\t$%d, %d(%%rbx)\n",
-                        prg_ptr->param, prg_ptr->offset);
+                asprintfa(&out, fmts.minus_off_fmt, prg_ptr->param,
+                                                     prg_ptr->offset);
             else
-                asprintfa(&out,
-                        "\tsubb\t$%d, (%%rbx)\n",
-                        prg_ptr->param);
+                asprintfa(&out, fmts.minus_fmt, prg_ptr->param);
             break;
 
         case '[':
-            asprintfa(&out,
-                    "LB%1$d:\n"
-                    "\tcmpb\t$0, (%%rbx)\n"
-                    "\tje\tLE%1$d\n",
-                    prg_ptr->param);
+            asprintfa(&out, fmts.lb_fmt, prg_ptr->param);
             break;
 
         case ']':
-            asprintfa(&out,
-                    "\tjmp\tLB%1$d\n"
-                    "LE%1$d:\n",
-                    prg_ptr->param);
+            asprintfa(&out, fmts.rb_fmt, prg_ptr->param);
             break;
 
         case '.':
-            asprintfa(&out,
-                    "\tcall\twrite\n");
+            asprintfa(&out, fmts.dot_fmt);
             break;
 
         case ',':
-            asprintfa(&out,
-                    "\tcall\tread\n");
+            asprintfa(&out, fmts.comma_fmt);
             break;
         }
 
@@ -306,30 +281,9 @@ char *compile(const char *src, struct options *opt)
     }
 
     /* cleanup code, write/read calls */
-    asprintfa(&out,
-            "\tmovl\t$0, %%eax\n"         /* return value */
-            "\tpopq\t%%rbp\n"
-            "\tret\n");
-
-    asprintfa(&out,
-            "write:\n"
-            "\tmovq\t$%d, %%rax\n"        /* syscall */
-            "\tmovq\t$%d, %%rdi\n"        /* fd */
-            "\tmovq\t%%rbx, %%rsi\n"      /* buf */
-            "\tmovq\t$1, %%rdx\n"         /* count */
-            "\tsyscall\n"
-            "\tret\n",
-            SYS_write, STDOUT_FILENO);
-
-    asprintfa(&out,
-            "read:\n"
-            "\tmovq\t$%d, %%rax\n"        /* syscall */
-            "\tmovq\t$%d, %%rdi\n"        /* fd */
-            "\tmovq\t%%rbx, %%rsi\n"      /* buf */
-            "\tmovq\t$1, %%rdx\n"         /* count */
-            "\tsyscall\n"
-            "\tret\n",
-            SYS_read, STDIN_FILENO);
+    asprintfa(&out, fmts.exit_fmt);
+    asprintfa(&out, fmts.write_fmt, SYS_write, STDOUT_FILENO);
+    asprintfa(&out, fmts.read_fmt, SYS_read, STDIN_FILENO);
 
     prg_clear(&prg);
     return out;

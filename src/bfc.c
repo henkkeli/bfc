@@ -3,6 +3,7 @@
 #include "common.h"
 #include "file.h"
 #include "compile.h"
+#include "arch.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,13 +27,14 @@ static struct option const long_opts[] = {
     {"mem-size", required_argument, NULL, MEM_SIZE},
     {"no-optimize", no_argument, NULL, NO_OPTIMIZE},
     {"symbol", required_argument, NULL, 's'},
+    {"arch", required_argument, NULL, 'a'},
     {NULL, 0, NULL, 0}
 };
 
 int handle_args(int argc, char *argv[], struct options *opt)
 {
     int c;
-    while ((c = getopt_long(argc, argv, "cs:So:", long_opts, NULL)) != -1)
+    while ((c = getopt_long(argc, argv, "a:co:s:S", long_opts, NULL)) != -1)
     {
         switch (c)
         {
@@ -61,6 +63,10 @@ int handle_args(int argc, char *argv[], struct options *opt)
                 error(EXIT_FAILURE, 0,
                         "symbol '_start' is reserved, use 'main' instead");
             opt->symbol = strdup(optarg);
+            break;
+
+        case 'a':
+            opt->arch = strdup(optarg);
             break;
 
         case '?':
@@ -99,9 +105,14 @@ int main(int argc, char *argv[])
         .outfile = NULL,
         .infile = NULL,
         .optimize = 1,
+        .arch = NULL,
+        .set_fmts = NULL,
     };
 
     handle_args(argc, argv, &opt);
+
+    if (set_arch(&opt) == -1)
+        error(EXIT_FAILURE, 0, "architecture not supported");
 
     struct stat stbuf;
     if (stat(opt.infile, &stbuf) == -1)

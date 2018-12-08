@@ -2,6 +2,7 @@
 #include "str.h"
 #include "file.h"
 #include "compile.h"
+#include "arch.h"
 #include <stdlib.h>
 #include <string.h>
 #include <check.h>
@@ -79,6 +80,8 @@ static void mkopt(struct options *opt, int optimize)
     opt->outfile=NULL;
     opt->infile=NULL;
     opt->optimize=optimize;
+    opt->arch=NULL;
+    opt->set_fmts=NULL;
 }
 
 START_TEST (test_compile_null)
@@ -97,6 +100,7 @@ START_TEST (test_compile_valid)
 {
     struct options opt;
     mkopt(&opt, 0);
+    set_arch(&opt);
     char *out = compile("a+a-a,a.a[a]a<a>a", &opt);
     char *out_trimmed = compile("+-,.[]<>", &opt);
 
@@ -112,6 +116,7 @@ START_TEST (test_compile_valid_optimize)
 {
     struct options opt;
     mkopt(&opt, 1);
+    set_arch(&opt);
     char *out = compile(">>>,<<<+>->+<-,-", &opt);
 
     ck_assert_ptr_ne(out, NULL);
@@ -124,6 +129,7 @@ START_TEST (test_compile_unmatching_loops)
 {
     struct options opt;
     mkopt(&opt, 0);
+    set_arch(&opt);
     char *out = compile("][", &opt);
 
     ck_assert_ptr_eq(out, NULL);
@@ -134,6 +140,7 @@ START_TEST (test_compile_empty)
 {
     struct options opt;
     mkopt(&opt, 0);
+    set_arch(&opt);
     char *out_empty = compile("", &opt);
     char *out_onlycomments = compile("foo", &opt);
 

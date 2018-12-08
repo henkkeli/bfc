@@ -20,6 +20,8 @@ A Brainfuck compiler, because why not
 
 `--no-optimize` disable all optimization
 
+`-a|--arch <architecture>` target architecture, only x86\_64 supported for now
+
 # Notes
 
 Compile with `meson build && ninja -C build`
