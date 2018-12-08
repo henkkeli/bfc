@@ -4,12 +4,12 @@
 
 const char *armv6l_init_fmt = 
     "\t.globl\t%1$s\n"
-    ".balign 4\n"
+    "\t.balign 4\n"
     "\t.lcomm\tbuf, %2$d\n"
     ".rbuf:\n"
     "\t.word\tbuf-(.rload+8)\n"    /* PC-relative offset */
     "\t.text\n"
-    ".balign 4\n"
+    "\t.balign 4\n"
     "%1$s:\n"
     "\tpush\t{fp, lr}\n"
     "\tadd\tfp, sp, #4\n"
