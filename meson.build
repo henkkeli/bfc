@@ -24,6 +24,7 @@ executable('bfc',
   'src/file.c',
   'src/str.c',
   'src/arch/amd64.c',
+  'src/arch/armv6l.c',
   include_directories: incdir
 )
 
@@ -37,6 +38,7 @@ if check.found()
     'src/file.c',
     'src/str.c',
     'src/arch/amd64.c',
+    'src/arch/armv6l.c',
     dependencies: check,
     include_directories: incdir
   )

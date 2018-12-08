@@ -107,12 +107,15 @@ int main(int argc, char *argv[])
         .optimize = 1,
         .arch = NULL,
         .set_fmts = NULL,
+        .native = 0,
     };
 
     handle_args(argc, argv, &opt);
 
     if (set_arch(&opt) == -1)
         error(EXIT_FAILURE, 0, "architecture not supported");
+    if (opt.native == 0 && opt.assemble == 1)
+        error(EXIT_FAILURE, 0, "assembling supported only on native builds");
 
     struct stat stbuf;
     if (stat(opt.infile, &stbuf) == -1)

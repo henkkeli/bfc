@@ -82,6 +82,7 @@ static void mkopt(struct options *opt, int optimize)
     opt->optimize=optimize;
     opt->arch=NULL;
     opt->set_fmts=NULL;
+    opt->native=1;
 }
 
 START_TEST (test_compile_null)

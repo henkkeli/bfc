@@ -31,6 +31,7 @@ struct options {
     int optimize;
     char *arch;
     void (*set_fmts)(struct formats*);
+    int native;
 };
 
 #endif /* COMMON_H */

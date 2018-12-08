@@ -20,7 +20,7 @@ A Brainfuck compiler, because why not
 
 `--no-optimize` disable all optimization
 
-`-a|--arch <architecture>` target architecture, only x86\_64 supported for now
+`-a|--arch <architecture>` target architecture, x86\_64 and ARMv6 supported
 
 # Notes
 
@@ -34,7 +34,8 @@ Rewritten in C. Old C++ version is in old-cxx branch. Some changes:
 - No longer need intermediate files
 - Assemble and link with one gcc call
 
-Generated machine code works only on amd64 architecture on linux.
+Generated machine code works only on linux. Supported platforms are x86\_64
+and ARMv6. Thumb instruction set for ARM may be supported in future.
 
 If start symbol is main, program can be run as standalone executable.
 Symbols other than main/\_start can be called from C programs by declaring
