@@ -82,7 +82,7 @@ static void mkopt(struct options *opt, int optimize)
     opt->optimize=optimize;
     opt->arch=NULL;
     opt->set_fmts=NULL;
-    opt->native=1;
+    opt->native=0;
 }
 
 START_TEST (test_compile_null)
@@ -110,6 +110,7 @@ START_TEST (test_compile_valid)
 
     free(out);
     free(out_trimmed);
+    free(opt.arch);
 }
 END_TEST
 
@@ -123,6 +124,7 @@ START_TEST (test_compile_valid_optimize)
     ck_assert_ptr_ne(out, NULL);
 
     free(out);
+    free(opt.arch);
 }
 END_TEST
 
@@ -134,6 +136,8 @@ START_TEST (test_compile_unmatching_loops)
     char *out = compile("][", &opt);
 
     ck_assert_ptr_eq(out, NULL);
+
+    free(opt.arch);
 }
 END_TEST
 
@@ -151,9 +155,37 @@ START_TEST (test_compile_empty)
 
     free(out_empty);
     free(out_onlycomments);
+    free(opt.arch);
 }
 END_TEST
 
+START_TEST (test_arch_native)
+{
+    struct options opt;
+    mkopt(&opt, 0);
+    opt.arch = NULL;
+
+    int ret = set_arch(&opt);
+
+    ck_assert_int_eq(ret, 0);
+    ck_assert_int_eq(opt.native, 1);
+    ck_assert_ptr_ne(opt.arch, NULL);
+
+    free(opt.arch);
+}
+END_TEST
+
+START_TEST (test_arch_unsupported)
+{
+    struct options opt;
+    mkopt(&opt, 0);
+    opt.arch = "doesntexist";
+
+    int ret = set_arch(&opt);
+
+    ck_assert_int_eq(ret, -1);
+}
+END_TEST
 
 Suite *bfc_suite(void)
 {
@@ -173,10 +205,15 @@ Suite *bfc_suite(void)
     tcase_add_test(tc_compile, test_compile_unmatching_loops);
     tcase_add_test(tc_compile, test_compile_empty);
 
+    TCase *tc_arch = tcase_create("arch");
+    tcase_add_test(tc_file, test_arch_native);
+    tcase_add_test(tc_file, test_arch_unsupported);
+
     Suite *s = suite_create("bfc");
     suite_add_tcase(s, tc_str);
     suite_add_tcase(s, tc_file);
     suite_add_tcase(s, tc_compile);
+    suite_add_tcase(s, tc_arch);
 
     return s;
 }
