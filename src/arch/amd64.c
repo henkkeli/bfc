@@ -1,6 +1,5 @@
 #include "arch/amd64.h"
 #include "common.h"
-#include <asm/unistd_64.h>
 
 const char *amd64_init_fmt = 
     "\t.globl\t%1$s\n"
@@ -18,7 +17,7 @@ const char *amd64_exit_fmt =
 
 const char *amd64_read_fmt =
     ".read:\n"
-    "\tmovq\t$"STR(__NR_read)", %%rax\n"
+    "\tmovq\t$0, %%rax\n"          /* syscall read */
     "\tmovq\t$%d, %%rdi\n"         /* fd */
     "\tmovq\t%%rbx, %%rsi\n"       /* buf */
     "\tmovq\t$1, %%rdx\n"          /* count */
@@ -27,7 +26,7 @@ const char *amd64_read_fmt =
 
 const char *amd64_write_fmt =
     ".write:\n"
-    "\tmovq\t$"STR(__NR_write)", %%rax\n"
+    "\tmovq\t$1, %%rax\n"          /* syscall write */
     "\tmovq\t$%d, %%rdi\n"         /* fd */
     "\tmovq\t%%rbx, %%rsi\n"       /* buf */
     "\tmovq\t$1, %%rdx\n"          /* count */

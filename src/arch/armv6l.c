@@ -1,7 +1,6 @@
 #include "arch/armv6l.h"
 #include "common.h"
 #include <stdlib.h>
-#include <asm/unistd_32.h>
 
 const char *armv6l_init_fmt = 
     "\t.globl\t%1$s\n"
@@ -23,7 +22,7 @@ const char *armv6l_exit_fmt =
 
 const char *armv6l_read_fmt =
     ".read:\n"
-    "\tmov\tr7, #"STR(__NR_read)"\n"
+    "\tmov\tr7, #3\n"              /* syscall read */
     "\tmov\tr0, #%d\n"             /* fd */
     "\tmov\tr1, r3\n"              /* buf */
     "\tmov\tr2, #1\n"              /* count */
@@ -32,7 +31,7 @@ const char *armv6l_read_fmt =
 
 const char *armv6l_write_fmt =
     ".write:\n"
-    "\tmov\tr7, #"STR(__NR_write)"\n"
+    "\tmov\tr7, #4\n"              /* syscall write */
     "\tmov\tr0, #%d\n"             /* fd */
     "\tmov\tr1, r3\n"              /* buf */
     "\tmov\tr2, #1\n"              /* count */
