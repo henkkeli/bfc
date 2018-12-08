@@ -1,6 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#define STR_IMPL_(x) #x
+#define STR(x) STR_IMPL_(x)
+
 struct formats {
     const char *init_fmt;
     const char *exit_fmt;

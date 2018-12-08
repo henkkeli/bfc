@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/syscall.h>
 #include <string.h>
 
 struct loopstack {
@@ -282,8 +281,8 @@ char *compile(const char *src, struct options *opt)
 
     /* cleanup code, write/read calls */
     asprintfa(&out, fmts.exit_fmt);
-    asprintfa(&out, fmts.write_fmt, SYS_write, STDOUT_FILENO);
-    asprintfa(&out, fmts.read_fmt, SYS_read, STDIN_FILENO);
+    asprintfa(&out, fmts.write_fmt, STDOUT_FILENO);
+    asprintfa(&out, fmts.read_fmt, STDIN_FILENO);
 
     prg_clear(&prg);
     return out;
