@@ -138,6 +138,12 @@ static int parse(const char *src, struct program *prg, struct options *opt)
         prg_add_instr(prg, c, param, offset);
     }
 
+    if (!loopstack_empty(stack_top))
+    {
+        prg_clear(prg);
+        return 0;
+    }
+
     return 1;
 }
 

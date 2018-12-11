@@ -8,5 +8,6 @@ struct loopstack {
 
 int begin_loop(struct loopstack **top, int *count);
 int end_loop(struct loopstack **top);
+int loopstack_empty(struct loopstack *top);
 
 #endif /* LOOP_H */

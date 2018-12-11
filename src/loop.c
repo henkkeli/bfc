@@ -12,7 +12,7 @@ int begin_loop(struct loopstack **top, int *count)
 
 int end_loop(struct loopstack **top)
 {
-    if (*top == NULL)
+    if (loopstack_empty(*top))
         return -1;
 
     int res = (*top)->n;
@@ -20,4 +20,9 @@ int end_loop(struct loopstack **top)
     *top = (*top)->prev;
     free(tmp);
     return res;
+}
+
+int loopstack_empty(struct loopstack *top)
+{
+    return top == NULL;
 }
