@@ -2,89 +2,13 @@
 
 #include "common.h"
 #include "compile.h"
+#include "loop.h"
+#include "program.h"
 #include "str.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-
-struct loopstack {
-    int n;
-    struct loopstack *prev;
-};
-
-struct instr {
-    char cmd;
-    int param;
-    int offset;
-    struct instr *next;
-};
-
-struct program {
-    struct instr *begin;
-    struct instr *end;
-};
-
-static void prg_add_instr(struct program *prg, char cmd, int param, int offset)
-{
-    struct instr *newnode = malloc(sizeof(struct instr));
-    newnode->cmd = cmd;
-    newnode->param = param;
-    newnode->offset = offset;
-    newnode->next = NULL;
-
-    if (prg->end != NULL)
-        prg->end->next = newnode;
-    else
-        prg->begin = newnode;
-
-    prg->end = newnode;
-}
-
-static void prg_cat(struct program *prg, struct program *subprg)
-{
-    if (subprg->begin == NULL)
-        return;
-
-    if (prg->begin == NULL)
-        prg->begin = subprg->begin;
-    else
-        prg->end->next = subprg->begin;
-
-    prg->end = subprg->end;
-}
-
-static void prg_clear(struct program *prg)
-{
-    while (prg->begin != NULL)
-    {
-        struct instr *tmp = prg->begin;
-        prg->begin = prg->begin->next;
-        free(tmp);
-    }
-    prg->end = NULL;
-}
-
-static int begin_loop(struct loopstack **top, int *count)
-{
-    struct loopstack *loop = (struct loopstack *) malloc(sizeof(struct loopstack));
-    loop->n = *count;
-    loop->prev = *top;
-    *top = loop;
-    return (*count)++;
-}
-
-static int end_loop(struct loopstack **top)
-{
-    if (*top == NULL)
-        return -1;
-
-    int res = (*top)->n;
-    struct loopstack *tmp = *top;
-    *top = (*top)->prev;
-    free(tmp);
-    return res;
-}
 
 static void compound_instr(const char *src, struct program *subprg)
 {
