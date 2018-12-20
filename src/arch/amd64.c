@@ -8,10 +8,12 @@ const char *amd64_init_fmt =
     "%1$s:\n"
     "\tpushq\t%%rbp\n"
     "\tmovq\t%%rsp, %%rbp\n"
+    "\tpushq\t%%rbx\n"
     "\tleaq\tbuf(%%rip), %%rbx\n"; /* init cell pointer */
 
 const char *amd64_exit_fmt =
     "\tmovl\t$0, %%eax\n"          /* return value */
+    "\tpopq\t%%rbx\n"
     "\tpopq\t%%rbp\n"
     "\tret\n";
 

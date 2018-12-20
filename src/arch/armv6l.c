@@ -11,7 +11,7 @@ const char *armv6l_init_fmt =
     "\t.text\n"
     "\t.balign 4\n"
     "%1$s:\n"
-    "\tpush\t{fp, lr}\n"
+    "\tpush\t{r7, fp, lr}\n"
     "\tadd\tfp, sp, #4\n"
     "\tldr\tr3, .rbuf\n"           /* init cell pointer */
     ".rload:\n"
@@ -20,7 +20,7 @@ const char *armv6l_init_fmt =
 const char *armv6l_exit_fmt =
     "\tmov\tr0, #0\n"              /* return value */
     "\tsub\tsp, fp, #4\n"
-    "\tpop\t{fp, pc}\n";           /* exit by popping PC */
+    "\tpop\t{r7, fp, pc}\n";       /* exit by popping PC */
 
 const char *armv6l_read_fmt =
     ".read:\n"
