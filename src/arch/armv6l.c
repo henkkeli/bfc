@@ -51,10 +51,20 @@ const char *armv6l_plus_fmt =
     "\tadd\tr2, r2, #%d\n"
     "\tstrb\tr2, [r3]\n";
 
+const char *armv6l_plus_off_fmt =
+    "\tldrb\tr2, [r3, #%2$d]\n"
+    "\tadd\tr2, r2, #%1$d\n"
+    "\tstrb\tr2, [r3, #%2$d]\n";
+
 const char *armv6l_minus_fmt =
     "\tldrb\tr2, [r3]\n"
     "\tsub\tr2, r2, #%d\n"
     "\tstrb\tr2, [r3]\n";
+
+const char *armv6l_minus_off_fmt =
+    "\tldrb\tr2, [r3, #%2$d]\n"
+    "\tsub\tr2, r2, #%1$d\n"
+    "\tstrb\tr2, [r3, #%2$d]\n";
 
 const char *armv6l_lb_fmt =
     ".LB%1$d:\n"
@@ -81,9 +91,9 @@ void armv6l_set_fmts(struct formats *fmts)
     fmts->gt_fmt        = armv6l_gt_fmt;
     fmts->lt_fmt        = armv6l_lt_fmt;
     fmts->plus_fmt      = armv6l_plus_fmt;
-    fmts->plus_off_fmt  = NULL;
+    fmts->plus_off_fmt  = armv6l_plus_off_fmt;
     fmts->minus_fmt     = armv6l_minus_fmt;
-    fmts->minus_off_fmt = NULL;
+    fmts->minus_off_fmt = armv6l_minus_off_fmt;
     fmts->lb_fmt        = armv6l_lb_fmt;
     fmts->rb_fmt        = armv6l_rb_fmt;
     fmts->comma_fmt     = armv6l_comma_fmt;

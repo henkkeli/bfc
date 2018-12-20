@@ -23,7 +23,6 @@ int set_arch(struct options *opts)
     else if (strcmp(opts->arch, "armv6l") == 0)
     {
         opts->set_fmts = &armv6l_set_fmts;
-        opts->optimize = 0;
     }
     else
     {
