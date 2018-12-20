@@ -59,9 +59,9 @@ static void compound_instr(const char *src, struct program *subprg)
 
     /* move pointer to final position */
     if (cur < 0)
-        prg_add_instr_1(subprg, '<', -cur);
+        prg_add_instr_1(subprg, SYM_SUBP, -cur);
     else if (cur > 0)
-        prg_add_instr_1(subprg, '>', cur);
+        prg_add_instr_1(subprg, SYM_ADDP, cur);
 
     /* generate +/- instructions relative to alredy moved pointer */
     for (int i = 0; i < mem_diff_size; ++i)
@@ -70,16 +70,16 @@ static void compound_instr(const char *src, struct program *subprg)
         if (diff == 0)
             continue;
 
-        char ptr_cmd;
+        sym_t ptr_cmd;
 
         if (diff < 0)
         {
-            ptr_cmd = '-';
+            ptr_cmd = SYM_SUB;
             diff = -diff;
         }
         else
         {
-            ptr_cmd = '+';
+            ptr_cmd = SYM_ADD;
         }
 
         prg_add_instr_2(subprg, ptr_cmd, diff, i + low - cur);
@@ -100,11 +100,11 @@ static int parse(const char *src, struct program *prg, struct options *opt)
         {
         case '.':
         case ',':
-            prg_add_instr_0(prg, src[i]);
+            prg_add_instr_0(prg, sym(src[i]));
             break;
 
         case '[':
-            prg_add_instr_1(prg, src[i], begin_loop(&stack_top, &loop_count));
+            prg_add_instr_1(prg, SYM_LB, begin_loop(&stack_top, &loop_count));
             break;
 
         case ']':
@@ -115,7 +115,7 @@ static int parse(const char *src, struct program *prg, struct options *opt)
                 return -1;
             }
 
-            prg_add_instr_1(prg, src[i], loop);
+            prg_add_instr_1(prg, SYM_LE, loop);
             break;
 
         case '+':
@@ -124,7 +124,7 @@ static int parse(const char *src, struct program *prg, struct options *opt)
         case '<':
             if (!opt->optimize)
             {
-                prg_add_instr_1(prg, src[i], 1);
+                prg_add_instr_1(prg, sym(src[i]), 1);
                 break;
             }
 
@@ -167,42 +167,45 @@ char *compile(const char *src, struct options *opt)
     {
         switch (ins->cmd)
         {
-        case '<':
+        case SYM_SUBP:
             asprintfa(&out, fmts.lt_fmt, ins->prm1);
             break;
 
-        case '>':
+        case SYM_ADDP:
             asprintfa(&out, fmts.gt_fmt, ins->prm1);
             break;
 
-        case '+':
+        case SYM_ADD:
             if (ins->prm2)
                 asprintfa(&out, fmts.plus_off_fmt, ins->prm1, ins->prm2);
             else
                 asprintfa(&out, fmts.plus_fmt, ins->prm1);
             break;
 
-        case '-':
+        case SYM_SUB:
             if (ins->prm2)
                 asprintfa(&out, fmts.minus_off_fmt, ins->prm1, ins->prm2);
             else
                 asprintfa(&out, fmts.minus_fmt, ins->prm1);
             break;
 
-        case '[':
+        case SYM_LB:
             asprintfa(&out, fmts.lb_fmt, ins->prm1);
             break;
 
-        case ']':
+        case SYM_LE:
             asprintfa(&out, fmts.rb_fmt, ins->prm1);
             break;
 
-        case '.':
+        case SYM_WR:
             asprintfa(&out, fmts.dot_fmt);
             break;
 
-        case ',':
+        case SYM_RD:
             asprintfa(&out, fmts.comma_fmt);
+            break;
+
+        case SYM_NOP:
             break;
         }
 
