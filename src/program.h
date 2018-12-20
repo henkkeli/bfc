@@ -3,8 +3,8 @@
 
 struct instr {
     char cmd;
-    int param;
-    int offset;
+    int prm1;
+    int prm2;
     struct instr *next;
 };
 
@@ -13,7 +13,9 @@ struct program {
     struct instr *end;
 };
 
-void prg_add_instr(struct program *prg, char cmd, int param, int offset);
+void prg_add_instr_0(struct program *prg, char cmd);
+void prg_add_instr_1(struct program *prg, char cmd, int prm1);
+void prg_add_instr_2(struct program *prg, char cmd, int prm1, int prm2);
 void prg_cat(struct program *prg, struct program *subprg);
 void prg_clear(struct program *prg);
 

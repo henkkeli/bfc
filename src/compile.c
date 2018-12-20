@@ -59,9 +59,9 @@ static void compound_instr(const char *src, struct program *subprg)
 
     /* move pointer to final position */
     if (cur < 0)
-        prg_add_instr(subprg, '<', -cur, 0);
+        prg_add_instr_1(subprg, '<', -cur);
     else if (cur > 0)
-        prg_add_instr(subprg, '>', cur, 0);
+        prg_add_instr_1(subprg, '>', cur);
 
     /* generate +/- instructions relative to alredy moved pointer */
     for (int i = 0; i < mem_diff_size; ++i)
@@ -82,7 +82,7 @@ static void compound_instr(const char *src, struct program *subprg)
             ptr_cmd = '+';
         }
 
-        prg_add_instr(subprg, ptr_cmd, diff, i + low - cur);
+        prg_add_instr_2(subprg, ptr_cmd, diff, i + low - cur);
     }
 
     free(mem_diff);
@@ -92,109 +92,109 @@ static int parse(const char *src, struct program *prg, struct options *opt)
 {
     struct loopstack *stack_top = NULL;
     int loop_count = 0;
+    int loop;
 
     for (size_t i = 0; i < strlen(src); ++i)
     {
-        char c = src[i];
-        int param = 1;
-        int offset = 0;
-        switch (c)
+        switch (src[i])
         {
         case '.':
         case ',':
+            prg_add_instr_0(prg, src[i]);
             break;
+
         case '[':
-            param = begin_loop(&stack_top, &loop_count);
+            prg_add_instr_1(prg, src[i], begin_loop(&stack_top, &loop_count));
             break;
+
         case ']':
-            param = end_loop(&stack_top);
-            if (param == -1)
+            loop = end_loop(&stack_top);
+            if (loop == -1)
             {
                 prg_clear(prg);
-                return 0;
+                return -1;
             }
+
+            prg_add_instr_1(prg, src[i], loop);
             break;
+
         case '+':
         case '-':
         case '>':
         case '<':
             if (!opt->optimize)
+            {
+                prg_add_instr_1(prg, src[i], 1);
                 break;
+            }
 
             struct program subprg = {NULL, NULL};
-            int count = strcspn(src + i, ",.[]");
-            char *cmpd = strndup(src + i, count);
+            int count = strcspn(&src[i], ",.[]");
+            char *cmpd = strndup(&src[i], count);
             compound_instr(cmpd, &subprg);
             free(cmpd);
             prg_cat(prg, &subprg);
-            i += (count-1);
+            i += count-1;
 
-            continue;
-
-        default:
-            continue;
+            break;
         }
-
-        prg_add_instr(prg, c, param, offset);
     }
 
     if (!loopstack_empty(stack_top))
     {
         prg_clear(prg);
-        return 0;
+        return -1;
     }
 
-    return 1;
+    return 0;
 }
 
 char *compile(const char *src, struct options *opt)
 {
     struct program prg = {NULL, NULL};
-    if (src == NULL || opt == NULL || !parse(src, &prg, opt))
+    if (src == NULL || opt == NULL || parse(src, &prg, opt) == -1)
         return NULL;
 
     struct formats fmts;
     (*opt->set_fmts)(&fmts);
 
-    struct instr *prg_ptr = prg.begin;
+    struct instr *ins = prg.begin;
     char *out = NULL;
 
     asprintfa(&out, fmts.init_fmt, opt->symbol, opt->memsize);
 
-    while (prg_ptr != NULL)
+    while (ins != NULL)
     {
-        switch (prg_ptr->cmd)
+        switch (ins->cmd)
         {
         case '<':
-            asprintfa(&out, fmts.lt_fmt, prg_ptr->param);
+            asprintfa(&out, fmts.lt_fmt, ins->prm1);
             break;
 
         case '>':
-            asprintfa(&out, fmts.gt_fmt, prg_ptr->param);
+            asprintfa(&out, fmts.gt_fmt, ins->prm1);
             break;
 
         case '+':
-            if (prg_ptr->offset)
-                asprintfa(&out, fmts.plus_off_fmt, prg_ptr->param,
-                                                    prg_ptr->offset);
+            if (ins->prm2)
+                asprintfa(&out, fmts.plus_off_fmt, ins->prm1, ins->prm2);
             else
-                asprintfa(&out, fmts.plus_fmt, prg_ptr->param);
+                asprintfa(&out, fmts.plus_fmt, ins->prm1);
             break;
 
         case '-':
-            if (prg_ptr->offset)
-                asprintfa(&out, fmts.minus_off_fmt, prg_ptr->param,
-                                                     prg_ptr->offset);
+            if (ins->prm2)
+                asprintfa(&out, fmts.minus_off_fmt, ins->prm1, ins->prm2);
             else
-                asprintfa(&out, fmts.minus_fmt, prg_ptr->param);
+                asprintfa(&out, fmts.minus_fmt, ins->prm1);
             break;
 
         case '[':
-            asprintfa(&out, fmts.lb_fmt, prg_ptr->param);
+            asprintfa(&out, fmts.lb_fmt, ins->prm1);
             break;
 
         case ']':
-            asprintfa(&out, fmts.rb_fmt, prg_ptr->param);
+            asprintfa(&out, fmts.rb_fmt, ins->prm1);
             break;
 
         case '.':
@@ -206,7 +206,7 @@ char *compile(const char *src, struct options *opt)
             break;
         }
 
-        prg_ptr = prg_ptr->next;
+        ins = ins->next;
     }
 
     /* cleanup code, write/read calls */

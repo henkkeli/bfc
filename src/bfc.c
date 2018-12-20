@@ -31,7 +31,7 @@ static struct option const long_opts[] = {
     {NULL, 0, NULL, 0}
 };
 
-int handle_args(int argc, char *argv[], struct options *opt)
+void handle_args(int argc, char *argv[], struct options *opt)
 {
     int c;
     while ((c = getopt_long(argc, argv, "a:co:s:S", long_opts, NULL)) != -1)
@@ -62,6 +62,7 @@ int handle_args(int argc, char *argv[], struct options *opt)
             if (strcmp(optarg, "_start") == 0)
                 error(EXIT_FAILURE, 0,
                         "symbol '_start' is reserved, use 'main' instead");
+
             opt->symbol = strdup(optarg);
             break;
 
@@ -70,7 +71,8 @@ int handle_args(int argc, char *argv[], struct options *opt)
             break;
 
         case '?':
-            return 0;
+            error(EXIT_FAILURE, 0, "unrecognized argument");
+            __builtin_unreachable();
 
         default:
             abort();
@@ -82,14 +84,14 @@ int handle_args(int argc, char *argv[], struct options *opt)
     case 1:
         opt->infile = strdup(argv[optind]);
         break;
+
     case 0:
         error(EXIT_FAILURE, 0, "no input file");
-        __builtin_unreachable(); /* stop gcc complaining about fallthrough */
+        __builtin_unreachable();
+
     default:
         error(EXIT_FAILURE, 0, "too many arguments");
     }
-
-    return 1;
 }
 
 int main(int argc, char *argv[])

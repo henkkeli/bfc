@@ -1,12 +1,22 @@
 #include "program.h"
 #include <stdlib.h>
 
-void prg_add_instr(struct program *prg, char cmd, int param, int offset)
+void prg_add_instr_0(struct program *prg, char cmd)
+{
+    prg_add_instr_2(prg, cmd, 0, 0);
+}
+
+void prg_add_instr_1(struct program *prg, char cmd, int prm1)
+{
+    prg_add_instr_2(prg, cmd, prm1, 0);
+}
+
+void prg_add_instr_2(struct program *prg, char cmd, int prm1, int prm2)
 {
     struct instr *newnode = malloc(sizeof(struct instr));
     newnode->cmd = cmd;
-    newnode->param = param;
-    newnode->offset = offset;
+    newnode->prm1 = prm1;
+    newnode->prm2 = prm2;
     newnode->next = NULL;
 
     if (prg->end != NULL)
