@@ -100,7 +100,7 @@ static int parse(const char *src, struct program *prg, struct options *opt)
         {
         case '.':
         case ',':
-            prg_add_instr_0(prg, sym(src[i]));
+            prg_add_instr_0(prg, src[i]);
             break;
 
         case '[':
@@ -124,7 +124,7 @@ static int parse(const char *src, struct program *prg, struct options *opt)
         case '<':
             if (!opt->optimize)
             {
-                prg_add_instr_1(prg, sym(src[i]), 1);
+                prg_add_instr_1(prg, src[i], 1);
                 break;
             }
 
@@ -205,7 +205,7 @@ char *compile(const char *src, struct options *opt)
             asprintfa(&out, fmts.comma_fmt);
             break;
 
-        case SYM_NOP:
+        default:
             break;
         }
 

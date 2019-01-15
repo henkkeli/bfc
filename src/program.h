@@ -1,17 +1,16 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
-typedef enum {
-    SYM_NOP,
-    SYM_ADD,
-    SYM_SUB,
-    SYM_ADDP,
-    SYM_SUBP,
-    SYM_LB,
-    SYM_LE,
-    SYM_RD,
-    SYM_WR
-} sym_t;
+#define SYM_ADD '+'
+#define SYM_SUB '-'
+#define SYM_ADDP '>'
+#define SYM_SUBP '<'
+#define SYM_LB '['
+#define SYM_LE ']'
+#define SYM_RD ','
+#define SYM_WR '.'
+
+typedef char sym_t;
 
 struct instr {
     sym_t cmd;
@@ -25,7 +24,6 @@ struct program {
     struct instr *end;
 };
 
-sym_t sym(char c);
 void prg_add_instr_0(struct program *prg, sym_t cmd);
 void prg_add_instr_1(struct program *prg, sym_t cmd, int prm1);
 void prg_add_instr_2(struct program *prg, sym_t cmd, int prm1, int prm2);

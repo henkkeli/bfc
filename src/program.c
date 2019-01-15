@@ -1,22 +1,6 @@
 #include "program.h"
 #include <stdlib.h>
 
-sym_t sym(char c)
-{
-    switch (c)
-    {
-    case '+': return SYM_ADD;
-    case '-': return SYM_SUB;
-    case '>': return SYM_ADDP;
-    case '<': return SYM_SUBP;
-    case '[': return SYM_LB;
-    case ']': return SYM_LE;
-    case ',': return SYM_RD;
-    case '.': return SYM_WR;
-    default:  return SYM_NOP;
-    }
-}
-
 void prg_add_instr_0(struct program *prg, sym_t cmd)
 {
     prg_add_instr_2(prg, cmd, 0, 0);
