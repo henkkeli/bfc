@@ -3,35 +3,48 @@
 #include <stdio.h>
 #include <string.h>
 
-char *gen_fname(const char* path, const char* ext)
-{
-    if (path == NULL || *path == 0)
-        return NULL;
+const char *valid_exts[] = {".b", ".bf", NULL};
 
-    if (ext == NULL || *ext == 0)
+char *gen_fname(struct options *opt)
+{
+    if (opt->outfile != NULL)
+        return opt->outfile;
+
+    if (opt->assemble && opt->link)
         return strdup("a.out");
 
-    const char *bf_ext = ".bf";
-    size_t bf_ext_len = strlen(bf_ext);
-    size_t ext_len = strlen(ext);
+    if (opt->infile == NULL || *opt->infile == 0)
+        return NULL;
 
-    const char *base = strrchr(path, '/');
-    base = (base != NULL ? base+1 : path);
-    size_t base_len = strlen(base);
+    const char *ext = !opt->assemble ? ".s" : ".o";
+
+    const size_t ext_len = strlen(ext);
+
+    const char *base = strrchr(opt->infile, '/');
+    base = (base != NULL ? base+1 : opt->infile);
+    const size_t base_len = strlen(base);
 
     /* reserve buffer big enough for added extension */
-    char *fname = (char *) malloc(base_len + ext_len + 1);
+    char *fname = malloc(base_len + ext_len + 1);
     strcpy(fname, base);
 
-    /* remove .bf extension if there is one */
-    if (base_len > bf_ext_len &&
-            strcmp(fname + base_len - bf_ext_len, bf_ext) == 0)
-        fname[base_len - bf_ext_len] = 0;
+    /* remove old extension if there is one */
+    for (int i = 0; valid_exts[i] != NULL; ++i)
+    {
+        const size_t oldext_len = strlen(valid_exts[i]);
+
+        if (base_len > oldext_len &&
+            strcmp(fname + base_len - oldext_len, valid_exts[i]) == 0)
+        {
+            fname[base_len - oldext_len] = 0;
+            break;
+        }
+    }
 
     return strcat(fname, ext);
 }
 
-char *read_file(const char* path)
+char *read_file(const char *path)
 {
     FILE *stream = fopen(path, "r");
     if (stream == NULL)

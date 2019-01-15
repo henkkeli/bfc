@@ -1,18 +1,20 @@
 #ifndef FILE_H
 #define FILE_H
 
+#include "common.h"
+
 /**
  * @brief generate filename based on name of input file
  *
- * if ext is not NULL, filename will have possible ".bf" extension removed
- * and replaces by ext. if ext is NULL, "a.out" will be returned.
+ * figures out proper filename for output file, which may be *.s, *.o or a.out.
+ * possible .b/.bf extension is removed.
  *
- * @param path path to input file
- * @param ext extension for generated filename or NULL for linked executable
+ * @param opts struct with at least assemble/link properly filled and
+ * infile/outfile either filled or set to NULL.
  *
  * @return pointer to malloc'd string containing new filename
  */
-char *gen_fname(const char* path, const char* ext);
+char *gen_fname(struct options *opt);
 
 /**
  * @brief read entire file
@@ -21,6 +23,6 @@ char *gen_fname(const char* path, const char* ext);
  *
  * @return pointer to malloc'd string of file contents
  */
-char *read_file(const char* path);
+char *read_file(const char *path);
 
 #endif /* FILE_H */

@@ -43,34 +43,6 @@ START_TEST (test_asprintfa_null)
 }
 END_TEST
 
-START_TEST (test_file_fname_null)
-{
-    char *fname = gen_fname("whatever", NULL);
-    ck_assert_str_eq(fname, "a.out");
-
-    free(fname);
-}
-END_TEST
-
-START_TEST (test_file_fname_ext)
-{
-    char *fname = gen_fname("file", ".ext");
-    char *fname_bf = gen_fname("file.bf", ".ext");
-    char *fname_path = gen_fname("/path/to/file", ".ext");
-    char *fname_path_bf = gen_fname("/path/to/file.bf", ".ext");
-
-    ck_assert_str_eq(fname, "file.ext");
-    ck_assert_str_eq(fname_bf, "file.ext");
-    ck_assert_str_eq(fname_path, "file.ext");
-    ck_assert_str_eq(fname_path_bf, "file.ext");
-
-    free(fname);
-    free(fname_bf);
-    free(fname_path);
-    free(fname_path_bf);
-}
-END_TEST
-
 static void mkopt(struct options *opt, int optimize)
 {
     opt->assemble=0;
@@ -84,6 +56,61 @@ static void mkopt(struct options *opt, int optimize)
     opt->set_fmts=NULL;
     opt->native=0;
 }
+
+START_TEST (test_file_fname_ext)
+{
+    struct options opt;
+    mkopt(&opt, 0);
+    opt.infile = "file";
+    opt.assemble = 0;
+    char *fname = gen_fname(&opt);
+
+    opt.infile = "file.bf";
+    char *fname_bf = gen_fname(&opt);
+
+    opt.infile = "/path/to/file";
+    char *fname_path = gen_fname(&opt);
+
+    opt.infile = "/path/to/file.bf";
+    char *fname_path_bf = gen_fname(&opt);
+
+    opt.infile = "file.b";
+    char *fname_b = gen_fname(&opt);
+
+    opt.infile = "file.";
+    char *fname_dot = gen_fname(&opt);
+
+    opt.infile = ".bf";
+    char *fname_dotfile = gen_fname(&opt);
+
+    opt.infile = "file.a";
+    char *fname_other = gen_fname(&opt);
+
+    opt.assemble = 1;
+    opt.link = 1;
+    char *aout = gen_fname(&opt);
+
+    ck_assert_str_eq(fname, "file.s");
+    ck_assert_str_eq(fname_bf, "file.s");
+    ck_assert_str_eq(fname_path, "file.s");
+    ck_assert_str_eq(fname_path_bf, "file.s");
+    ck_assert_str_eq(fname_b, "file.s");
+    ck_assert_str_eq(fname_dot, "file..s");
+    ck_assert_str_eq(fname_dotfile, ".bf.s");
+    ck_assert_str_eq(fname_other, "file.a.s");
+    ck_assert_str_eq(aout, "a.out");
+
+    free(fname);
+    free(fname_bf);
+    free(fname_path);
+    free(fname_path_bf);
+    free(fname_b);
+    free(fname_dot);
+    free(fname_dotfile);
+    free(fname_other);
+    free(aout);
+}
+END_TEST
 
 START_TEST (test_compile_null)
 {
@@ -195,7 +222,6 @@ Suite *bfc_suite(void)
     tcase_add_test(tc_str, test_asprintfa_null);
 
     TCase *tc_file = tcase_create("file");
-    tcase_add_test(tc_file, test_file_fname_null);
     tcase_add_test(tc_file, test_file_fname_ext);
 
     TCase *tc_compile = tcase_create("compile");

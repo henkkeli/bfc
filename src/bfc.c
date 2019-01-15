@@ -135,15 +135,7 @@ int main(int argc, char *argv[])
         error(EXIT_FAILURE, 0, "cannot parse input");
     free(src);
 
-    if (opt.outfile == NULL)
-    {
-        if (!opt.assemble)
-            opt.outfile = gen_fname(opt.infile, ".s");
-        else if (!opt.link)
-            opt.outfile = gen_fname(opt.infile, ".o");
-        else
-            opt.outfile = gen_fname(opt.infile, NULL);
-    }
+    opt.outfile = gen_fname(&opt);
 
     FILE *out_stream;
     if (!opt.assemble)
