@@ -3,7 +3,7 @@
 
 int begin_loop(struct loopstack **top, int *count)
 {
-    struct loopstack *loop = (struct loopstack *) malloc(sizeof(struct loopstack));
+    struct loopstack *loop = malloc(sizeof(struct loopstack));
     loop->n = *count;
     loop->prev = *top;
     *top = loop;
